@@ -14,34 +14,76 @@ services:
       DSH_HOME: /var/lib/dsh
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
 
+    # The upstream browser trust fence must receive the LAN authority because
+    # the container itself only sees its Docker-network address.
+    command:
+      - "--trusted-host"
+      - "${LAN_HOST:-192.168.2.10}"
+
     # Harness is available to the HTTPS proxy on the Compose network.
     expose:
       - "3080"
 
     volumes:
       - dsh-home:/var/lib/dsh
-      - ./workspace:/workspace
+      - dsh-workspace:/workspace
 
     working_dir: /workspace
     init: true
     restart: unless-stopped
 
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3080/').then(response => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 15s
+
   caddy:
     image: caddy:2-alpine
     container_name: deepseek-harness-https
     depends_on:
-      - deepseek-harness
+      deepseek-harness:
+        condition: service_healthy
 
     environment:
-      LAN_HOST: ${LAN_HOST:-192.168.2.10}
-      HTTPS_PORT: ${HTTPS_PORT:-443}
+      CADDYFILE: |
+        http://${LAN_HOST:-192.168.2.10}:80 {
+            handle /caddy-local-root.crt {
+                root * /data/caddy/pki/authorities/local
+                rewrite * /root.crt
+                file_server
+            }
+
+            handle {
+                redir https://${LAN_HOST:-192.168.2.10}:${HTTPS_PORT:-443}{uri} permanent
+            }
+        }
+
+        https://${LAN_HOST:-192.168.2.10}:443 {
+            tls internal
+
+            reverse_proxy deepseek-harness:3080 {
+                header_up Host {http.request.host}
+            }
+        }
+
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        printf '%s\n' "$$CADDYFILE" > /tmp/Caddyfile
+        caddy fmt --overwrite /tmp/Caddyfile
+        exec caddy run --config /tmp/Caddyfile --adapter caddyfile
 
     ports:
       - "3080:80"
       - "${HTTPS_PORT:-443}:443"
 
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy-data:/data
       - caddy-config:/config
 
@@ -49,5 +91,6 @@ services:
 
 volumes:
   dsh-home:
+  dsh-workspace:
   caddy-data:
   caddy-config:

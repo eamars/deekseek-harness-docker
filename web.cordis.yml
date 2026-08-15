@@ -1,6 +1,6 @@
 # The current dsh CLI rejects --host 0.0.0.0. This deployment patch binds the
-# web server to the container interfaces; compose.yaml publishes port 3080 on
-# the Docker host interfaces for LAN access.
+# web server to the container interfaces so the Caddy service can proxy it on
+# the internal Compose network.
 - id: webserver
   config:
     host: 0.0.0.0
