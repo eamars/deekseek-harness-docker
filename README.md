@@ -11,31 +11,48 @@ In PowerShell:
 ```powershell
 Copy-Item .env.example .env
 New-Item -ItemType Directory -Path .\workspace -Force
-docker compose up --build -d
-docker compose logs -f deepseek-harness
+docker compose up -d
+docker compose logs -f caddy
 ```
 
-Open <http://127.0.0.1:3080>, choose `/workspace`, and configure the model in
-**Settings → Models**. If `DEEPSEEK_API_KEY` is set in `.env`, the container
-inherits it automatically.
+The default LAN address is `192.168.2.10`. If the Docker host uses another
+address, edit `LAN_HOST` in `.env` before starting the stack. If
+`DEEPSEEK_API_KEY` is set in `.env`, the container inherits it automatically.
 
 ## LAN access
 
-The Compose mapping publishes port 3080 on all Docker host interfaces. No
-additional host or trusted-host settings are required:
+The stack terminates HTTPS with Caddy and proxies to Harness over the internal
+Compose network. Use:
 
-```powershell
-docker compose up -d
+```text
+https://192.168.2.10/
+```
+
+The old HTTP URL redirects automatically:
+
+```text
+http://192.168.2.10:3080/
 ```
 
 The service uses `pull_policy: build`, so Compose rebuilds the local image each
 time the stack is started or refreshed.
 
-From another device on the same network, open:
+### Local certificate
 
-```text
-http://<docker-host-lan-ip>:3080
+Caddy uses its internal certificate authority because `192.168.2.10` is a
+private LAN address. On the first run, browsers may show a certificate warning.
+To trust the certificate on a Windows client, copy the Caddy root certificate:
+
+```powershell
+docker compose cp caddy:/data/caddy/pki/authorities/local/root.crt .\caddy-local-root.crt
+Import-Certificate -FilePath .\caddy-local-root.crt -CertStoreLocation Cert:\CurrentUser\Root
 ```
+
+Install that root certificate on each LAN client that will use the UI. Caddy's
+certificate storage is persisted in the `caddy-data` volume.
+
+If port 443 is already in use, set `HTTPS_PORT=8443` in `.env` and use
+`https://192.168.2.10:8443/` instead.
 
 For a clean rebuild with detailed build output:
 
@@ -51,11 +68,13 @@ docker compose down
 docker compose up --build -d
 ```
 
-The named volume is preserved by `docker compose down`. Do not add `-v` unless
-you intend to remove the persisted Harness settings, credentials, and sessions.
+The named volumes are preserved by `docker compose down`. Do not add `-v`
+unless you intend to remove the persisted Harness settings, credentials,
+sessions, and local certificate authority.
 
 ## Upstream references
 
 - <https://github.com/deepseek-ai/deepseek-harness>
 - <https://github.com/deepseek-ai/deepseek-harness/blob/master/docs/user/guide/index.md>
 - <https://github.com/deepseek-ai/deepseek-harness/blob/master/apps/cli/reference/README.md>
+- <https://caddyserver.com/docs/caddyfile/directives/tls>

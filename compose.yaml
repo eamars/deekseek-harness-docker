@@ -14,9 +14,9 @@ services:
       DSH_HOME: /var/lib/dsh
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
 
-    # Publish on all host interfaces so devices on the LAN can connect.
-    ports:
-      - "3080:3080"
+    # Harness is available to the HTTPS proxy on the Compose network.
+    expose:
+      - "3080"
 
     volumes:
       - dsh-home:/var/lib/dsh
@@ -26,5 +26,28 @@ services:
     init: true
     restart: unless-stopped
 
+  caddy:
+    image: caddy:2-alpine
+    container_name: deepseek-harness-https
+    depends_on:
+      - deepseek-harness
+
+    environment:
+      LAN_HOST: ${LAN_HOST:-192.168.2.10}
+      HTTPS_PORT: ${HTTPS_PORT:-443}
+
+    ports:
+      - "3080:80"
+      - "${HTTPS_PORT:-443}:443"
+
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+    restart: unless-stopped
+
 volumes:
   dsh-home:
+  caddy-data:
+  caddy-config:
