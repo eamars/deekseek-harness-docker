@@ -1,0 +1,11 @@
+.git
+.git/**
+.env
+.env.*
+!.env.example
+node_modules
+workspace
+workspace/**
+dsh-home
+dsh-home/**
+*.log

@@ -1,0 +1,41 @@
+services:
+  deepseek-harness:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        DSH_VERSION: ${DSH_VERSION:-0.1.0-rc.6}
+
+    image: deepseek-harness:local
+    container_name: deepseek-harness
+
+    environment:
+      DSH_HOME: /var/lib/dsh
+      DSH_TELEMETRY_DISABLED: "1"
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+
+    # The image patches the web server to bind inside the container. This
+    # host-side mapping keeps the UI local to this machine by default.
+    ports:
+      - "127.0.0.1:3080:3080"
+
+    # The command is appended to the image entrypoint. Set
+    # DSH_TRUSTED_HOST when using an authenticated reverse proxy or a named
+    # internal host instead of 127.0.0.1.
+    command:
+      - "--trusted-host"
+      - "${DSH_TRUSTED_HOST:-127.0.0.1}"
+
+    volumes:
+      - dsh-home:/var/lib/dsh
+      - ./workspace:/workspace
+
+    working_dir: /workspace
+    init: true
+    restart: unless-stopped
+
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  dsh-home:
