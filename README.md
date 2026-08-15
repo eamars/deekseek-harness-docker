@@ -19,6 +19,21 @@ Open <http://127.0.0.1:3080>, choose `/workspace`, and configure the model in
 **Settings → Models**. If `DEEPSEEK_API_KEY` is set in `.env`, the container
 inherits it automatically.
 
+## LAN access
+
+The Compose mapping publishes port 3080 on all Docker host interfaces. No
+additional host or trusted-host settings are required:
+
+```powershell
+docker compose up --build -d
+```
+
+From another device on the same network, open:
+
+```text
+http://<docker-host-lan-ip>:3080
+```
+
 For a clean rebuild with detailed build output:
 
 ```powershell
@@ -35,18 +50,6 @@ docker compose up --build -d
 
 The named volume is preserved by `docker compose down`. Do not add `-v` unless
 you intend to remove the persisted Harness settings, credentials, and sessions.
-
-## Remote reverse-proxy deployment
-
-Keep the Harness container behind an authenticated TLS reverse proxy. Change
-the port mapping to `3080:3080` and set the public authority in `.env`:
-
-```dotenv
-DSH_TRUSTED_HOST=harness.example.com
-```
-
-The raw Harness Web UI has no TLS or authentication layer and should not be
-published directly to the Internet.
 
 ## Upstream references
 
