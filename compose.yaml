@@ -14,15 +14,9 @@ services:
       DSH_HOME: /var/lib/dsh
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
 
-    # The upstream browser trust fence must receive the LAN authority because
-    # the container itself only sees its Docker-network address.
-    command:
-      - "--trusted-host"
-      - "${LAN_HOST:-192.168.2.10}"
-
-    # Harness is available to the HTTPS proxy on the Compose network.
-    expose:
-      - "3080"
+    # Host networking exposes the Docker server's real interfaces to Harness.
+    # Its built-in all-interface runtime discovers and trusts the LAN IPs.
+    network_mode: host
 
     volumes:
       - dsh-home:/var/lib/dsh
@@ -37,7 +31,7 @@ services:
         - CMD
         - node
         - -e
-        - "fetch('http://127.0.0.1:3080/').then(response => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"
+        - "fetch('http://localhost:3080/').then(response => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"
       interval: 5s
       timeout: 3s
       retries: 30
@@ -50,9 +44,13 @@ services:
       deepseek-harness:
         condition: service_healthy
 
+    # Caddy must see the original destination IP during the TLS handshake.
+    # This lets it issue the correct private-LAN certificate at runtime.
+    network_mode: host
+
     environment:
       CADDYFILE: |
-        http://${LAN_HOST:-192.168.2.10}:80 {
+        http:// {
             handle /caddy-local-root.crt {
                 root * /data/caddy/pki/authorities/local
                 rewrite * /root.crt
@@ -60,15 +58,21 @@ services:
             }
 
             handle {
-                redir https://${LAN_HOST:-192.168.2.10}:${HTTPS_PORT:-443}{uri} permanent
+                redir https://{http.request.host}{uri} permanent
             }
         }
 
-        https://${LAN_HOST:-192.168.2.10}:443 {
-            tls internal
+        https:// {
+            tls internal {
+                on_demand
+            }
 
-            reverse_proxy deepseek-harness:3080 {
-                header_up Host {http.request.host}
+            reverse_proxy localhost:3080 {
+                # Harness rc.6 keeps settings, credentials, and endpoint
+                # discovery on its loopback authority. The LAN firewall owns
+                # reachability, while this internal hop presents that authority.
+                header_up Host localhost:3080
+                header_up Origin http://localhost:3080
             }
         }
 
@@ -79,13 +83,20 @@ services:
         caddy fmt --overwrite /tmp/Caddyfile
         exec caddy run --config /tmp/Caddyfile --adapter caddyfile
 
-    ports:
-      - "3080:80"
-      - "${HTTPS_PORT:-443}:443"
-
     volumes:
       - caddy-data:/data
       - caddy-config:/config
+
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          wget --quiet --spider --no-check-certificate
+          https://localhost/ || exit 1
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 10s
 
     restart: unless-stopped
 
