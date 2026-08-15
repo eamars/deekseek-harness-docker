@@ -7,6 +7,7 @@ services:
         DSH_VERSION: ${DSH_VERSION:-0.1.0-rc.6}
 
     image: deepseek-harness:local
+    pull_policy: build
     container_name: deepseek-harness
 
     environment:

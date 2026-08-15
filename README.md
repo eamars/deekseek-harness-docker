@@ -25,8 +25,11 @@ The Compose mapping publishes port 3080 on all Docker host interfaces. No
 additional host or trusted-host settings are required:
 
 ```powershell
-docker compose up --build -d
+docker compose up -d
 ```
+
+The service uses `pull_policy: build`, so Compose rebuilds the local image each
+time the stack is started or refreshed.
 
 From another device on the same network, open:
 
