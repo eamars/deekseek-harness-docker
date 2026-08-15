@@ -19,6 +19,13 @@ Open <http://127.0.0.1:3080>, choose `/workspace`, and configure the model in
 **Settings → Models**. If `DEEPSEEK_API_KEY` is set in `.env`, the container
 inherits it automatically.
 
+For a clean rebuild with detailed build output:
+
+```powershell
+docker compose build --no-cache --progress=plain
+docker compose up -d
+```
+
 ## Stop and upgrade
 
 ```powershell
