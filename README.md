@@ -2,16 +2,31 @@
 
 This directory runs the official DeepSeek Harness Web UI in Docker. The
 container stores Harness settings, credentials, profiles, and sessions in the
-named `dsh-home` volume. A persistent `dsh-workspace` volume is mounted at
-`/workspace`.
+named `dsh-home` volume. The workspace is mounted at `/workspace` and defaults
+to the persistent `dsh-workspace` volume.
+
+## Configuration
+
+The workspace source is controlled by the optional `DSH_WORKSPACE` environment
+variable. Set it in a `.env` file next to `compose.yaml`, or in the stack
+environment in Portainer:
+
+```env
+DSH_WORKSPACE=/home/eamars/dsh
+```
+
+When `DSH_WORKSPACE` is unset, Docker Compose uses the named `dsh-workspace`
+volume. The DSH application data and configuration remain in the separate
+`dsh-home` volume mounted at `/var/lib/dsh`.
 
 ## Portainer deployment
 
 Deploy this directory or its Git repository as a stack on a Linux Docker
 server. The build context must contain `compose.yaml`, `Dockerfile`, and
 `web.cordis.yml`. The Caddy configuration is embedded in `compose.yaml`, and
-the workspace is a named volume, so no additional files or host directories
-are required.
+the workspace uses a named volume by default, so no additional files or host
+directories are required. Set `DSH_WORKSPACE` when a host directory should be
+used instead.
 
 Both services use host networking. Harness discovers the Docker server's LAN
 interfaces through its built-in all-interface runtime, and Caddy derives the
@@ -35,8 +50,9 @@ automatically. It can also be entered later in the Web UI.
 
 The stack terminates HTTPS with Caddy and proxies to Harness over host
 loopback. The Caddy configuration is embedded in `compose.yaml`, and the
-Harness workspace uses a Docker-managed volume. No companion Caddyfile or host
-workspace-directory setup is required. Use:
+Harness workspace uses a Docker-managed volume by default. No companion
+Caddyfile or host workspace-directory setup is required unless `DSH_WORKSPACE`
+is set. Use:
 
 ```text
 https://DOCKER-SERVER-IP/

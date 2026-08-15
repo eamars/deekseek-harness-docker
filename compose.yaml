@@ -20,7 +20,7 @@ services:
 
     volumes:
       - dsh-home:/var/lib/dsh
-      - dsh-workspace:/workspace
+      - ${DSH_WORKSPACE:-dsh-workspace}:/workspace
 
     working_dir: /workspace
     init: true
