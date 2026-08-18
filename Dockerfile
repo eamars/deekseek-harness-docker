@@ -1,7 +1,7 @@
 FROM node:24-bookworm-slim
 
 ARG DSH_VERSION=0.1.0-rc.7
-ARG DSH_MARKET_VERSION=1.12.1
+ARG DSH_MARKET_VERSION=1.12.2
 ARG PNPM_VERSION=10.34.5
 
 ENV NODE_ENV=production \
@@ -10,15 +10,32 @@ ENV NODE_ENV=production \
     npm_config_python=/usr/bin/python3 \
     DSH_MARKET_VERSION=${DSH_MARKET_VERSION}
 
-RUN apt-get update
-
-RUN apt-get install --yes --no-install-recommends \
+RUN apt-get update \
+ && apt-get install --yes --no-install-recommends \
       bash \
       build-essential \
       ca-certificates \
+      curl \
+      dnsutils \
+      file \
       git \
+      iproute2 \
+      iputils-ping \
+      jq \
+      less \
+      netcat-openbsd \
+      openssh-client \
+      pkg-config \
+      procps \
       python3 \
+      python3-dev \
+      python3-pip \
+      python3-venv \
       ripgrep \
+      tree \
+      unzip \
+      wget \
+      zip \
  && rm -rf /var/lib/apt/lists/*
 
 RUN groupadd --gid 10001 dsh \
