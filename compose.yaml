@@ -4,7 +4,9 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        DSH_VERSION: ${DSH_VERSION:-0.1.0-rc.6}
+        DSH_VERSION: ${DSH_VERSION:-0.1.0-rc.7}
+        DSH_MARKET_VERSION: ${DSH_MARKET_VERSION:-1.12.1}
+        PNPM_VERSION: ${PNPM_VERSION:-10.34.5}
 
     image: deepseek-harness:local
     pull_policy: build
@@ -68,7 +70,7 @@ services:
             }
 
             reverse_proxy localhost:3080 {
-                # Harness rc.6 keeps settings, credentials, and endpoint
+                # Harness rc.7 keeps settings, credentials, and endpoint
                 # discovery on its loopback authority. The LAN firewall owns
                 # reachability, while this internal hop presents that authority.
                 header_up Host localhost:3080

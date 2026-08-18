@@ -1,6 +1,7 @@
 # DeepSeek Harness Docker deployment
 
-This directory runs the official DeepSeek Harness Web UI in Docker. The
+This directory runs the official DeepSeek Harness Web UI in Docker with the
+community dsh-market plugin preconfigured. The
 container stores Harness settings, credentials, profiles, and sessions in the
 named `dsh-home` volume. The workspace is mounted at `/workspace` and defaults
 to the persistent `dsh-workspace` volume.
@@ -19,11 +20,18 @@ When `DSH_WORKSPACE` is unset, Docker Compose uses the named `dsh-workspace`
 volume. The DSH application data and configuration remain in the separate
 `dsh-home` volume mounted at `/var/lib/dsh`.
 
+The image installs pnpm and bootstraps `dshmarket` into the `web` profile on
+first start. The bootstrap is idempotent, so an existing `dsh-home` volume is
+left intact and market updates made from the Web UI are preserved. The market
+package and pnpm versions can be overridden in `.env` with
+`DSH_MARKET_VERSION` and `PNPM_VERSION`.
+
 ## Portainer deployment
 
 Deploy this directory or its Git repository as a stack on a Linux Docker
-server. The build context must contain `compose.yaml`, `Dockerfile`, and
-`web.cordis.yml`. The Caddy configuration is embedded in `compose.yaml`, and
+server. The build context must contain `compose.yaml`, `Dockerfile`,
+`dsh-entrypoint.sh`, and `web.cordis.yml`. The Caddy configuration is embedded
+in `compose.yaml`, and
 the workspace uses a named volume by default, so no additional files or host
 directories are required. Set `DSH_WORKSPACE` when a host directory should be
 used instead.
@@ -45,6 +53,10 @@ docker compose logs -f caddy
 
 If `DEEPSEEK_API_KEY` is set in `.env`, the container inherits it
 automatically. It can also be entered later in the Web UI.
+
+After the first healthy start, open **Settings → Plugin Market** to browse and
+install community plugins. The first start needs registry access so the image
+entrypoint can install the pinned market package into the persistent profile.
 
 ## LAN access
 
@@ -144,4 +156,5 @@ sessions, workspace, and local certificate authority.
 - <https://github.com/deepseek-ai/deepseek-harness>
 - <https://github.com/deepseek-ai/deepseek-harness/blob/master/docs/user/guide/index.md>
 - <https://github.com/deepseek-ai/deepseek-harness/blob/master/apps/cli/reference/README.md>
+- <https://github.com/dsh-market/dsh-market>
 - <https://caddyserver.com/docs/caddyfile/directives/tls>
