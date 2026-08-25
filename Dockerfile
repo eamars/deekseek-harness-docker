@@ -1,4 +1,6 @@
-FROM node:24-bookworm-slim
+# Trixie base so the distro python3 tracks the newest supported minor (3.13)
+# for node-gyp native builds and in-container development use.
+FROM node:24-trixie-slim
 
 ARG DSH_VERSION=0.1.0-rc.7
 ARG DSH_MARKET_VERSION=1.12.2
