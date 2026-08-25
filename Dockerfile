@@ -2,8 +2,8 @@
 # for node-gyp native builds and in-container development use.
 FROM node:24-trixie-slim
 
-ARG DSH_VERSION=0.1.0-rc.7
-ARG DSH_MARKET_VERSION=1.12.2
+ARG DSH_VERSION=0.1.1-rc.2
+ARG DSH_MARKET_VERSION=1.26.0
 ARG PNPM_VERSION=10.34.5
 
 ENV NODE_ENV=production \
