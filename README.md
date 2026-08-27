@@ -82,14 +82,26 @@ the Harness listener used by the local Caddy reverse proxy.
 The service uses `pull_policy: build`, so Compose rebuilds the local image each
 time the stack is started or refreshed.
 
+## Settings → Models over LAN
+
+Upstream DSH `0.1.1-rc.2` moved settings, credentials, and model discovery
+behind the browser-side loopback check. This image patches the served
+`dsh-client-connection` client bundle during `docker build` to treat the
+browser as loopback (`isLoopback: true`). Combined with Caddy's existing
+`header_up Host localhost:3080` / `Origin http://localhost:3080`, both the
+server-side and client-side loopback checks pass, so **Settings → Models**
+works from the LAN HTTPS URL again without pinning an older DSH version or
+using an SSH tunnel.
+
+This matches the existing trust posture of this deployment: the LAN firewall
+is the access boundary. If you prefer upstream's stricter loopback-only
+behavior, remove the client-patch block from `Dockerfile`; you would then need
+to use `http://localhost:3080/` on the Docker host or an SSH tunnel for
+Settings → Models.
+
 ## Model server and API key selection
 
-Open **Settings → Models** in the LAN browser. Caddy presents its internal
-Harness connection as loopback-same-origin so the existing Harness settings,
-credential, and model-discovery operations are available through the HTTPS
-entrypoint. The LAN firewall remains the deployment access boundary.
-
-To point the native DeepSeek provider at another endpoint:
+Open **Settings → Models** from the LAN HTTPS URL. To point the native DeepSeek provider at another endpoint:
 
 1. Open the DeepSeek provider card.
 2. Enter the API key.

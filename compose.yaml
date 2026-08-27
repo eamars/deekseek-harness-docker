@@ -70,9 +70,9 @@ services:
             }
 
             reverse_proxy localhost:3080 {
-                # Harness rc.7 keeps settings, credentials, and endpoint
-                # discovery on its loopback authority. The LAN firewall owns
-                # reachability, while this internal hop presents that authority.
+                # This presents a loopback authority to Harness's server-side
+                # /api fence. The Dockerfile patches the browser client to also
+                # report loopback, so Settings > Models works from LAN HTTPS.
                 header_up Host localhost:3080
                 header_up Origin http://localhost:3080
             }

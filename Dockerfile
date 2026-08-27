@@ -50,6 +50,24 @@ RUN npm install --global --no-audit --no-fund --foreground-scripts \
       --allow-scripts=@deepseek-ai/dsh-subprocess-local,koffi,node-pty,@google/genai,protobufjs \
       "@deepseek-ai/dsh@${DSH_VERSION}"
 
+# The DSH web client intentionally keeps settings/credentials on the browser
+# loopback origin. This deployment already fronts DSH with Caddy, which rewrites
+# the upstream Host/Origin to localhost for the server-side /api fence. To keep
+# Settings > Models usable from the LAN HTTPS URL on current DSH versions, also
+# tell the browser-side connection that it is on a loopback authority. The LAN
+# firewall remains the deployment access boundary, matching this repo's existing
+# all-interface design.
+RUN node -e '
+  const fs = require("node:fs");
+  const path = "/usr/local/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-client-connection/lib/client.js";
+  const file = fs.readFileSync(path, "utf8");
+  const pattern = /isLoopback:\s*pageLocation === void 0 \|\| isLoopbackHostname\(pageLocation\.hostname\),/;
+  if (!pattern.test(file)) {
+    throw new Error("dsh client-connection loopback expression not found; update the Dockerfile patch");
+  }
+  fs.writeFileSync(path, file.replace(pattern, "isLoopback: true,"));
+'
+
 # The DSH plugin manager delegates profile installs to pnpm. Pin the major
 # version because pnpm 10's build-script approval behavior is part of the
 # plugin install contract.
