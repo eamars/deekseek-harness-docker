@@ -57,15 +57,15 @@ RUN npm install --global --no-audit --no-fund --foreground-scripts \
 # tell the browser-side connection that it is on a loopback authority. The LAN
 # firewall remains the deployment access boundary, matching this repo's existing
 # all-interface design.
-RUN node -e '
-  const fs = require("node:fs");
-  const path = "/usr/local/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-client-connection/lib/client.js";
-  const file = fs.readFileSync(path, "utf8");
-  const pattern = /isLoopback:\s*pageLocation === void 0 \|\| isLoopbackHostname\(pageLocation\.hostname\),/;
-  if (!pattern.test(file)) {
-    throw new Error("dsh client-connection loopback expression not found; update the Dockerfile patch");
-  }
-  fs.writeFileSync(path, file.replace(pattern, "isLoopback: true,"));
+RUN node -e '\
+  const fs = require("node:fs");\
+  const path = "/usr/local/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-client-connection/lib/client.js";\
+  const file = fs.readFileSync(path, "utf8");\
+  const pattern = /isLoopback:\s*pageLocation === void 0 \|\| isLoopbackHostname\(pageLocation\.hostname\),/;\
+  if (!pattern.test(file)) {\
+    throw new Error("dsh client-connection loopback expression not found; update the Dockerfile patch");\
+  }\
+  fs.writeFileSync(path, file.replace(pattern, "isLoopback: true,"));\
 '
 
 # The DSH plugin manager delegates profile installs to pnpm. Pin the major
