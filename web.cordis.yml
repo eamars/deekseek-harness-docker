@@ -5,3 +5,13 @@
   config:
     host: 0.0.0.0
     port: 3080
+
+# Opt into the official session-local Schedule tools. Time-context is optional
+# for Schedule itself, but lets the model interpret browser-local times before
+# it submits an explicit zone to schedule_create.
+- insert:
+    - id: time-context
+      name: '@deepseek-ai/dsh-time-context'
+
+    - id: schedule
+      name: '@deepseek-ai/dsh-schedule'

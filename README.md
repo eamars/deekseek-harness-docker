@@ -26,6 +26,10 @@ left intact and market updates made from the Web UI are preserved. The market
 package and pnpm versions can be overridden in `.env` with
 `DSH_MARKET_VERSION` and `PNPM_VERSION`.
 
+The Web overlay also enables the built-in `dsh-schedule` module and its
+time-context companion. These are part of the pinned DSH release and do not
+require a separate market install or Docker service.
+
 ## Portainer deployment
 
 Deploy this directory or its Git repository as a stack on a Linux Docker
@@ -57,6 +61,23 @@ automatically. It can also be entered later in the Web UI.
 After the first healthy start, open **Settings → Plugin Market** to browse and
 install community plugins. The first start needs registry access so the image
 entrypoint can install the pinned market package into the persistent profile.
+
+## Session-local scheduling
+
+The model can use `schedule_create`, `schedule_list`, and `schedule_delete` to
+create reminders. Schedule supports positive `after_seconds` delays, explicit
+absolute `at` targets, and fixed-rate `every_seconds` intervals of at least five
+minutes. Absolute local times must include an explicit `UTC` or IANA time zone;
+the time-context plugin helps the model interpret browser-local natural language
+but does not supply a persistent default zone.
+
+Reminders belong to their original Harness Session and persist with the
+session event log in `dsh-home`. Delivery is session-local: the Session must
+be live for an on-time follow-up. If the container or Session is cold, the
+reminder remains persisted and is handled when that Session is resumed. This
+module is not a general Cron runner and does not send operating-system, email,
+SMS, or other external notifications. Recurring reminders are fixed intervals,
+not calendar or Cron expressions.
 
 ## LAN access
 
